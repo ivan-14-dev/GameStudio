@@ -1,0 +1,297 @@
+/* ─── Animations — Smooth Game Engine Style ─── */
+
+@keyframes screenEnter {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { transform: scale(0.9) translateY(10px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes toastIn {
+  from { transform: translateY(-12px) scale(0.95); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+@keyframes countdownPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.12); opacity: 0.8; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+@keyframes scorePopup {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-50px) scale(1.4); opacity: 0; }
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes progressShimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: var(--glow-primary); }
+  50% { box-shadow: 0 0 32px rgba(124, 106, 255, 0.6), 0 0 80px rgba(124, 106, 255, 0.2); }
+}
+
+@keyframes confetti {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ─── Result Screen Animations ─── */
+
+@keyframes resultBounceIn {
+  0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+  50% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+  70% { transform: scale(0.9) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes resultSlideReveal {
+  from { transform: translateX(-40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes scoreCountUp {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes trophyFloat {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-12px) rotate(3deg); }
+}
+
+@keyframes defeatDroop {
+  0% { transform: translateY(0) rotate(0deg); }
+  30% { transform: translateY(5px) rotate(-5deg); }
+  60% { transform: translateY(3px) rotate(3deg); }
+  100% { transform: translateY(2px) rotate(-1deg); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(180deg); }
+}
+
+@keyframes barFill {
+  from { width: 0; }
+}
+
+@keyframes crownBounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(-8px) scale(1.15); }
+  50% { transform: translateY(0) scale(0.95); }
+  75% { transform: translateY(-4px) scale(1.05); }
+}
+
+/* ─── Action Feedback Animations ─── */
+
+@keyframes feedbackPop {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  60% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+@keyframes feedbackFloat {
+  0% { transform: translate(-50%, 0) scale(0.5); opacity: 1; }
+  100% { transform: translate(-50%, -80px) scale(1.2); opacity: 0; }
+}
+
+@keyframes feedbackShake {
+  0%, 100% { transform: translate(-50%, -50%) rotate(0); }
+  15% { transform: translate(-50%, -50%) rotate(-12deg); }
+  30% { transform: translate(-50%, -50%) rotate(10deg); }
+  45% { transform: translate(-50%, -50%) rotate(-8deg); }
+  60% { transform: translate(-50%, -50%) rotate(5deg); }
+  75% { transform: translate(-50%, -50%) rotate(-2deg); }
+}
+
+@keyframes feedbackBounce {
+  0% { transform: translate(-50%, -50%) scale(0); }
+  40% { transform: translate(-50%, -50%) scale(1.4); }
+  60% { transform: translate(-50%, -50%) scale(0.8); }
+  80% { transform: translate(-50%, -50%) scale(1.1); }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+@keyframes emojiRain {
+  0% { transform: translateY(-20px) rotate(0deg) scale(0); opacity: 1; }
+  20% { transform: translateY(0) scale(1.2); opacity: 1; }
+  100% { transform: translateY(120px) rotate(360deg) scale(0.3); opacity: 0; }
+}
+
+@keyframes rippleOut {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0.7; border-width: 4px; }
+  100% { transform: translate(-50%, -50%) scale(3); opacity: 0; border-width: 1px; }
+}
+
+@keyframes glowBurst {
+  0% { box-shadow: 0 0 0 0 var(--burst-color, rgba(124, 106, 255, 0.8)); }
+  50% { box-shadow: 0 0 30px 15px var(--burst-color, rgba(124, 106, 255, 0.4)); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* Action feedback overlay container */
+.action-feedback-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 500;
+  overflow: hidden;
+}
+
+.action-feedback-emoji {
+  position: absolute;
+  font-size: 2.5rem;
+  pointer-events: none;
+  filter: drop-shadow(0 0 8px rgba(0,0,0,0.5));
+}
+
+.action-feedback-text {
+  position: absolute;
+  font-weight: 800;
+  font-size: 1.4rem;
+  pointer-events: none;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+  white-space: nowrap;
+}
+
+.action-feedback-ripple {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid;
+  pointer-events: none;
+}
+
+/* ─── Result Screen Styles ─── */
+
+.result-emoji-hero {
+  font-size: 5rem;
+  animation: resultBounceIn 0.8s var(--ease-out-back) forwards;
+}
+
+.result-emoji-hero.win {
+  animation: resultBounceIn 0.8s var(--ease-out-back) forwards, trophyFloat 2s ease-in-out 1s infinite;
+}
+
+.result-emoji-hero.lose {
+  animation: resultBounceIn 0.8s var(--ease-out-back) forwards, defeatDroop 1.5s ease-in-out 1s forwards;
+}
+
+.result-title {
+  animation: slideUp 0.6s var(--ease-out-expo) 0.3s both;
+}
+
+.result-player-row {
+  animation: resultSlideReveal 0.5s var(--ease-out-expo) both;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.result-player-row:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+}
+
+.result-score-value {
+  animation: scoreCountUp 0.4s var(--ease-out-back) both;
+}
+
+.result-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-hover);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.result-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  animation: barFill 1s var(--ease-out-expo) both;
+}
+
+.result-crown {
+  animation: crownBounce 1.5s ease-in-out infinite;
+  display: inline-block;
+}
+
+.result-sparkle {
+  position: absolute;
+  font-size: 0.8rem;
+  animation: sparkle 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.result-confetti-piece {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  animation: confetti linear forwards;
+  pointer-events: none;
+  z-index: 600;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
