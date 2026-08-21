@@ -2,7 +2,7 @@ import { el, showToast } from '../components/dom.js';
 import { soundManager } from '../../audio/SoundManager.js';
 import { wsClient } from '../../multiplayer/WebSocketClient.js';
 import { eventBus } from '../../core/EventBus.js';
-import { EVENTS } from '../../../../shared/constants/events.js';
+import { EVENTS } from '../../shared/constants/events.js';
 
 export function RoomScreen(container, state) {
   const room = state?.room;

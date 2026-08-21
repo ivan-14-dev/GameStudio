@@ -1,4 +1,4 @@
-import { EVENTS } from '../../../shared/constants/events.js';
+import { EVENTS } from '../shared/constants/events.js';
 import { eventBus } from '../core/EventBus.js';
 import { Store } from '../core/Store.js';
 

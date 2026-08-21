@@ -1,6 +1,6 @@
 import { GameLoop } from '../../engine/GameLoop.js';
 import { InputManager } from '../../engine/InputManager.js';
-import { ARENA } from '../../../../shared/constants/snakeArena.js';
+import { ARENA } from '../../shared/constants/snakeArena.js';
 import { actionFeedback } from '../../ui/components/ActionFeedback.js';
 
 export function create({ container, controlsContainer, state, playerId, onAction }) {

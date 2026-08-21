@@ -2,7 +2,7 @@ import { el, showToast } from '../components/dom.js';
 import { soundManager } from '../../audio/SoundManager.js';
 import { wsClient } from '../../multiplayer/WebSocketClient.js';
 import { eventBus } from '../../core/EventBus.js';
-import { EVENTS } from '../../../../shared/constants/events.js';
+import { EVENTS } from '../../shared/constants/events.js';
 
 const GAME_INFO = {
   snake: { icon: '🐍', name: 'Snake Duel', players: '2–4', desc: 'Compétition de serpents' },

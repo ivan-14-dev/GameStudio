@@ -4,7 +4,7 @@ import { wsClient } from '../../multiplayer/WebSocketClient.js';
 import { eventBus } from '../../core/EventBus.js';
 import { soundManager } from '../../audio/SoundManager.js';
 import { actionFeedback } from '../components/ActionFeedback.js';
-import { EVENTS } from '../../../../shared/constants/events.js';
+import { EVENTS } from '../../shared/constants/events.js';
 
 export function PlayScreen(container, state) {
   if (!state?.gameId) { window.app.router.navigate('/'); return; }

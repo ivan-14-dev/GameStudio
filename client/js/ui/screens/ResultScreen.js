@@ -2,7 +2,7 @@ import { el } from '../components/dom.js';
 import { soundManager } from '../../audio/SoundManager.js';
 import { wsClient } from '../../multiplayer/WebSocketClient.js';
 import { eventBus } from '../../core/EventBus.js';
-import { EVENTS } from '../../../../shared/constants/events.js';
+import { EVENTS } from '../../shared/constants/events.js';
 import { actionFeedback } from '../components/ActionFeedback.js';
 
 function spawnConfetti(count = 40) {
