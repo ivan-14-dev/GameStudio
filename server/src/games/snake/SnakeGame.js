@@ -24,11 +24,21 @@ export default {
 
     const snakes = {};
     const players = config.players || [];
+    const cx = size / 2, cy = size / 2;
     for (let i = 0; i < playerCount; i++) {
       const pid = players[i]?.id || `p${i}`;
+      const [sx, sy] = spawns[i];
+      // Face toward center of board so snakes don't hit walls immediately
+      const dx = cx - sx, dy = cy - sy;
+      let direction;
+      if (Math.abs(dx) >= Math.abs(dy)) {
+        direction = dx > 0 ? 'RIGHT' : 'LEFT';
+      } else {
+        direction = dy > 0 ? 'DOWN' : 'UP';
+      }
       snakes[pid] = {
         body: [spawns[i]],
-        direction: 'RIGHT',
+        direction,
         alive: true,
         score: 0,
         color: COLORS[i % COLORS.length],

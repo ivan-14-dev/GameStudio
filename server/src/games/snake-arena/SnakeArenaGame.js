@@ -120,7 +120,7 @@ export default {
       events: { active: [], history: [] },
       objectives: [],
       tickCount: 0,
-      timer: config.timer || 0,
+      timer: config.timer || (mode === ARENA.MODES.DOMINATION ? 1800 : 0),
       config: {
         combat: config.combat || ARENA.COMBAT.CLASSIC,
         scoreTarget: config.scoreTarget || 1000,

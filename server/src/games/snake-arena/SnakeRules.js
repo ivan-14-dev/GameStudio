@@ -22,6 +22,7 @@ export function checkWinCondition(state, mode) {
 
     case ARENA.MODES.RACE: {
       const objectives = state.objectives || [];
+      if (objectives.length === 0) return { finished: false };
       const completed = [...state.players.entries()].find(([, p]) =>
         objectives.every(obj => obj.completedBy?.includes(p.id))
       );
