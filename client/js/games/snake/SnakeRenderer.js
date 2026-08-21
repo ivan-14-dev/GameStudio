@@ -1,6 +1,7 @@
 import { GameLoop } from '../../engine/GameLoop.js';
 import { InputManager } from '../../engine/InputManager.js';
 import { actionFeedback } from '../../ui/components/ActionFeedback.js';
+import { addFullscreenBtn, acquireWakeLock, isMobileDevice } from '../shared/gameUtils.js';
 
 const DIR_ARROWS = { UP: '↑', DOWN: '↓', LEFT: '←', RIGHT: '→' };
 
@@ -88,28 +89,8 @@ export function create({ container, controlsContainer, state, playerId, onAction
   controlsContainer.appendChild(dpad);
 
   // --- Fullscreen button (mobile) ---
-  const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  if (isMobile && document.fullscreenEnabled) {
-    const fsBtn = document.createElement('button');
-    fsBtn.className = 'snake-hud-btn';
-    fsBtn.textContent = '⛶';
-    fsBtn.title = 'Plein écran';
-    fsBtn.addEventListener('click', () => {
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      } else {
-        container.requestFullscreen().catch(() => {});
-      }
-    });
-    hud.appendChild(fsBtn);
-
-    const onFsChange = () => {
-      fsBtn.textContent = document.fullscreenElement ? '✕' : '⛶';
-      setTimeout(resize, 100);
-    };
-    document.addEventListener('fullscreenchange', onFsChange);
-    cleanups.push(() => document.removeEventListener('fullscreenchange', onFsChange));
-  }
+  const fsCleanup = addFullscreenBtn(container);
+  if (fsCleanup) cleanups.push(fsCleanup);
 
   // --- Gyroscope / tilt controls (mobile) ---
   const gyroIndicator = document.createElement('div');
@@ -117,7 +98,7 @@ export function create({ container, controlsContainer, state, playerId, onAction
   gyroIndicator.textContent = '📱 Gyroscope actif';
   container.appendChild(gyroIndicator);
 
-  if (isMobile && window.DeviceOrientationEvent) {
+  if (isMobileDevice() && window.DeviceOrientationEvent) {
     const gyroBtn = document.createElement('button');
     gyroBtn.className = 'snake-hud-btn';
     gyroBtn.textContent = '📱';
@@ -181,10 +162,7 @@ export function create({ container, controlsContainer, state, playerId, onAction
   }
 
   // Keep screen on during play
-  let wakeLock = null;
-  if ('wakeLock' in navigator) {
-    navigator.wakeLock.request('screen').then(wl => { wakeLock = wl; }).catch(() => {});
-  }
+  const releaseWakeLock = acquireWakeLock();
 
   // --- Rendering ---
   function render() {
@@ -367,7 +345,7 @@ export function create({ container, controlsContainer, state, playerId, onAction
       input.destroy();
       resizeObserver.disconnect();
       container.classList.remove('snake-container');
-      wakeLock?.release().catch(() => {});
+      releaseWakeLock();
       for (const fn of cleanups) fn();
     },
   };

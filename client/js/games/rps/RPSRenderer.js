@@ -1,9 +1,13 @@
 const ICONS = { rock: '🪨', paper: '📄', scissors: '✂️' };
+const KEY_MAP = { r: 'rock', p: 'paper', s: 'scissors', '1': 'rock', '2': 'paper', '3': 'scissors' };
 import { actionFeedback } from '../../ui/components/ActionFeedback.js';
+import { addFullscreenBtn, acquireWakeLock } from '../shared/gameUtils.js';
 
 export function create({ container, controlsContainer, state, playerId, onAction }) {
+  container.classList.add('rps-container', 'game-container');
   let gameState = state;
   let chosen = false;
+  const cleanups = [];
 
   const info = document.createElement('div');
   info.className = 'text-center';
@@ -21,27 +25,43 @@ export function create({ container, controlsContainer, state, playerId, onAction
   revealArea.style.cssText = 'display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:12px;min-height:60px';
   container.appendChild(revealArea);
 
+  const fsCleanup = addFullscreenBtn(container);
+  if (fsCleanup) cleanups.push(fsCleanup);
+  const releaseWakeLock = acquireWakeLock();
+
   // Choice buttons
   const choices = document.createElement('div');
   choices.style.cssText = 'display:flex;gap:12px;justify-content:center;margin-top:16px';
+  const btnMap = {};
   for (const [key, icon] of Object.entries(ICONS)) {
     const btn = document.createElement('button');
     btn.className = 'btn btn-secondary';
     btn.style.cssText = 'font-size:2.5rem;padding:16px 24px;border-radius:16px;transition:transform 0.15s,opacity 0.15s';
     btn.textContent = icon;
-    btn.addEventListener('click', () => {
-      if (chosen) return;
-      chosen = true;
-      onAction({ choice: key });
-      result.textContent = icon;
-      choices.querySelectorAll('button').forEach((b) => {
-        b.style.opacity = b === btn ? '1' : '0.3';
-        b.style.transform = b === btn ? 'scale(1.1)' : 'scale(0.9)';
-      });
-    });
+    btnMap[key] = btn;
+    btn.addEventListener('click', () => makeChoice(key));
     choices.appendChild(btn);
   }
   controlsContainer.appendChild(choices);
+
+  function makeChoice(key) {
+    if (chosen) return;
+    chosen = true;
+    onAction({ choice: key });
+    result.textContent = ICONS[key];
+    choices.querySelectorAll('button').forEach((b) => {
+      b.style.opacity = b === btnMap[key] ? '1' : '0.3';
+      b.style.transform = b === btnMap[key] ? 'scale(1.1)' : 'scale(0.9)';
+    });
+  }
+
+  // Keyboard: r/p/s or 1/2/3
+  const keyHandler = (e) => {
+    const choice = KEY_MAP[e.key.toLowerCase()];
+    if (choice) { e.preventDefault(); makeChoice(choice); }
+  };
+  document.addEventListener('keydown', keyHandler);
+  cleanups.push(() => document.removeEventListener('keydown', keyHandler));
 
   const waitingText = document.createElement('div');
   waitingText.className = 'text-center text-muted mt-md';
@@ -96,7 +116,7 @@ export function create({ container, controlsContainer, state, playerId, onAction
     },
     onTick() {},
     onSync(st) { gameState = st; },
-    destroy() { info.remove(); result.remove(); revealArea.remove(); choices.remove(); waitingText.remove(); },
+    destroy() { info.remove(); result.remove(); revealArea.remove(); choices.remove(); waitingText.remove(); container.classList.remove('rps-container', 'game-container'); releaseWakeLock(); for (const fn of cleanups) fn(); },
   };
 }
 

@@ -1,11 +1,18 @@
 import { actionFeedback } from '../../ui/components/ActionFeedback.js';
+import { addFullscreenBtn, acquireWakeLock } from '../shared/gameUtils.js';
 
 export function create({ container, controlsContainer, state, playerId, onAction }) {
+  container.classList.add('reaction-container', 'game-container');
   let gameState = state;
+  const cleanups = [];
 
   const area = document.createElement('div');
   area.style.cssText = 'position:relative;width:100%;height:300px;background:var(--bg-card);border-radius:16px;overflow:hidden;touch-action:manipulation';
   container.appendChild(area);
+
+  const fsCleanup = addFullscreenBtn(container);
+  if (fsCleanup) cleanups.push(fsCleanup);
+  const releaseWakeLock = acquireWakeLock();
 
   const info = document.createElement('div');
   info.className = 'text-center mt-sm';
@@ -125,6 +132,9 @@ export function create({ container, controlsContainer, state, playerId, onAction
       info.remove();
       scoreDisplay.remove();
       reactionTimes.remove();
+      container.classList.remove('reaction-container', 'game-container');
+      releaseWakeLock();
+      for (const fn of cleanups) fn();
     },
   };
 }

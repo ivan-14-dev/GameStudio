@@ -3,6 +3,7 @@
 @import url('./animations.css');
 @import url('./games/snake.css');
 @import url('./games/snake-arena.css');
+@import url('./games/games.css');
 
 *, *::before, *::after {
   box-sizing: border-box;

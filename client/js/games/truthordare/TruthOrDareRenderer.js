@@ -1,18 +1,36 @@
+import { addFullscreenBtn, acquireWakeLock } from '../shared/gameUtils.js';
+
 export function create({ container, controlsContainer, state, playerId, onAction }) {
+  container.classList.add('truthordare-container', 'game-container');
   let gameState = state;
+  const cleanups = [];
 
   const challengeBox = document.createElement('div');
   challengeBox.className = 'card';
-  challengeBox.style.cssText = 'text-align:center;padding:24px;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center';
+  challengeBox.style.cssText = 'text-align:center;padding:24px;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%';
   container.appendChild(challengeBox);
 
   const actions = document.createElement('div');
-  actions.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-top:12px';
+  actions.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-top:12px;width:100%';
   controlsContainer.appendChild(actions);
 
   const voteArea = document.createElement('div');
   voteArea.style.cssText = 'display:flex;gap:8px;margin-top:8px;justify-content:center';
   controlsContainer.appendChild(voteArea);
+
+  const fsCleanup = addFullscreenBtn(container);
+  if (fsCleanup) cleanups.push(fsCleanup);
+  const releaseWakeLock = acquireWakeLock();
+
+  // Keyboard: t for truth, d for dare
+  const keyHandler = (e) => {
+    if (!isMyTurn() || gameState.currentChallenge) return;
+    const k = e.key.toLowerCase();
+    if (k === 't' || k === '1') { e.preventDefault(); onAction({ choice: 'truth' }); }
+    if (k === 'd' || k === '2') { e.preventDefault(); onAction({ choice: 'dare' }); }
+  };
+  document.addEventListener('keydown', keyHandler);
+  cleanups.push(() => document.removeEventListener('keydown', keyHandler));
 
   let dareTimer = null;
 
@@ -125,7 +143,7 @@ export function create({ container, controlsContainer, state, playerId, onAction
     },
     onTick() {},
     onSync(st) { gameState = st; render(); },
-    destroy() { if (dareTimer) clearInterval(dareTimer); challengeBox.remove(); actions.remove(); voteArea.remove(); },
+    destroy() { if (dareTimer) clearInterval(dareTimer); challengeBox.remove(); actions.remove(); voteArea.remove(); container.classList.remove('truthordare-container', 'game-container'); releaseWakeLock(); for (const fn of cleanups) fn(); },
   };
 }
 

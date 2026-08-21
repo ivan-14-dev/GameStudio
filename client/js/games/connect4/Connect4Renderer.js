@@ -1,13 +1,15 @@
 const COLORS = { '🔴': '#ef4444', '🟡': '#fbbf24', '🔵': '#3b82f6', '🟢': '#22c55e' };
 import { actionFeedback } from '../../ui/components/ActionFeedback.js';
+import { addFullscreenBtn, acquireWakeLock } from '../shared/gameUtils.js';
 
 export function create({ container, controlsContainer, state, playerId, onAction }) {
+  container.classList.add('connect4-container', 'game-container');
   let gameState = state;
+  const cleanups = [];
   const grid = document.createElement('div');
-  grid.style.cssText = 'max-width:420px;margin:0 auto';
+  grid.className = 'c4-grid';
   container.appendChild(grid);
 
-  // Inject drop animation keyframes
   const style = document.createElement('style');
   style.textContent = `
     @keyframes dropIn { from { transform: translateY(-300px); opacity:0.5; } to { transform: translateY(0); opacity:1; } }
@@ -18,7 +20,22 @@ export function create({ container, controlsContainer, state, playerId, onAction
   `;
   container.appendChild(style);
 
-  let lastMove = null; // {row, col}
+  const fsCleanup = addFullscreenBtn(container);
+  if (fsCleanup) cleanups.push(fsCleanup);
+  const releaseWakeLock = acquireWakeLock();
+
+  // Keyboard: 1-7 for column selection
+  const keyHandler = (e) => {
+    const col = parseInt(e.key) - 1;
+    if (col >= 0 && col < gameState.cols && isMyTurn() && !gameState.winner && gameState.board[0][col] === null) {
+      e.preventDefault();
+      onAction({ col });
+    }
+  };
+  document.addEventListener('keydown', keyHandler);
+  cleanups.push(() => document.removeEventListener('keydown', keyHandler));
+
+  let lastMove = null;
 
   function isMyTurn() {
     const currentPid = gameState.playerOrder?.[gameState.currentTurn % gameState.playerOrder.length];
@@ -129,7 +146,7 @@ export function create({ container, controlsContainer, state, playerId, onAction
     },
     onTick() {},
     onSync(st) { gameState = st; lastMove = null; renderBoard(); updateTurn(); },
-    destroy() { grid.remove(); turnInfo.remove(); timerBar.remove(); style.remove(); if (turnTimerInterval) clearInterval(turnTimerInterval); },
+    destroy() { grid.remove(); turnInfo.remove(); timerBar.remove(); style.remove(); if (turnTimerInterval) clearInterval(turnTimerInterval); container.classList.remove('connect4-container', 'game-container'); releaseWakeLock(); for (const fn of cleanups) fn(); },
   };
 }
 

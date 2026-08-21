@@ -1,20 +1,26 @@
 import { actionFeedback } from '../../ui/components/ActionFeedback.js';
+import { addFullscreenBtn, acquireWakeLock } from '../shared/gameUtils.js';
 
 export function create({ container, controlsContainer, state, playerId, onAction }) {
+  container.classList.add('memory-container', 'game-container');
   let gameState = state;
+  const cleanups = [];
 
   const grid = document.createElement('div');
   const cols = Math.ceil(Math.sqrt(gameState.cardCount || 12));
-  grid.style.cssText = `display:grid;grid-template-columns:repeat(${cols},1fr);gap:6px;max-width:420px;margin:0 auto`;
+  grid.style.cssText = `display:grid;grid-template-columns:repeat(${cols},1fr);gap:6px;max-width:420px;margin:0 auto;width:100%`;
   container.appendChild(grid);
 
-  // Inject flip animation
   const style = document.createElement('style');
   style.textContent = `
     @keyframes memFlip { 0% { transform: scaleX(1); } 50% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
     .mem-flip { animation: memFlip 0.3s ease; }
   `;
   container.appendChild(style);
+
+  const fsCleanup = addFullscreenBtn(container);
+  if (fsCleanup) cleanups.push(fsCleanup);
+  const releaseWakeLock = acquireWakeLock();
 
   const cards = [];
 
@@ -140,7 +146,7 @@ export function create({ container, controlsContainer, state, playerId, onAction
     },
     onTick() {},
     onSync(st) { gameState = st; renderCards(); updateTurn(); updateScores(); },
-    destroy() { grid.remove(); turnInfo.remove(); scoreInfo.remove(); timerBar.remove(); style.remove(); if (turnTimerInterval) clearInterval(turnTimerInterval); },
+    destroy() { grid.remove(); turnInfo.remove(); scoreInfo.remove(); timerBar.remove(); style.remove(); if (turnTimerInterval) clearInterval(turnTimerInterval); container.classList.remove('memory-container', 'game-container'); releaseWakeLock(); for (const fn of cleanups) fn(); },
   };
 }
 

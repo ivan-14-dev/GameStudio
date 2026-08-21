@@ -1,13 +1,15 @@
 import { el } from '../../ui/components/dom.js';
 import { actionFeedback } from '../../ui/components/ActionFeedback.js';
+import { addFullscreenBtn, acquireWakeLock } from '../shared/gameUtils.js';
 
 export function create({ container, controlsContainer, state, playerId, onAction }) {
+  container.classList.add('tictactoe-container', 'game-container');
   let gameState = state;
+  const cleanups = [];
   const grid = document.createElement('div');
-  grid.style.cssText = `display:grid;grid-template-columns:repeat(${state.size},1fr);gap:4px;max-width:400px;margin:0 auto;aspect-ratio:1`;
+  grid.style.cssText = `display:grid;grid-template-columns:repeat(${state.size},1fr);gap:4px;max-width:400px;margin:0 auto;aspect-ratio:1;width:100%`;
   container.appendChild(grid);
 
-  // Inject win animation
   const style = document.createElement('style');
   style.textContent = `
     .ttt-cell-win { animation: tttWin 0.5s ease infinite alternate; }
@@ -16,6 +18,26 @@ export function create({ container, controlsContainer, state, playerId, onAction
     @keyframes tttPlace { from { transform: scale(0); } to { transform: scale(1); } }
   `;
   container.appendChild(style);
+
+  const fsCleanup = addFullscreenBtn(container);
+  if (fsCleanup) cleanups.push(fsCleanup);
+  const releaseWakeLock = acquireWakeLock();
+
+  // Keyboard: numpad 1-9 for 3x3 grid
+  const keyHandler = (e) => {
+    const num = parseInt(e.key);
+    if (num >= 1 && num <= 9 && state.size === 3 && !gameState.winner) {
+      const idx = num - 1;
+      const row = 2 - Math.floor(idx / 3);
+      const col = idx % 3;
+      if (gameState.board[row]?.[col] === null) {
+        const currentPid = gameState.playerOrder?.[gameState.currentTurn % gameState.playerOrder.length];
+        if (currentPid === playerId) { e.preventDefault(); onAction({ row, col }); }
+      }
+    }
+  };
+  document.addEventListener('keydown', keyHandler);
+  cleanups.push(() => document.removeEventListener('keydown', keyHandler));
 
   const cells = [];
   const SYMBOL_COLORS = { X: '#6c63ff', O: '#f472b6', '△': '#4ade80', '□': '#fbbf24' };
@@ -116,7 +138,7 @@ export function create({ container, controlsContainer, state, playerId, onAction
     },
     onTick() {},
     onSync(st) { gameState = st; lastPlaced = null; renderBoard(); updateTurn(); },
-    destroy() { grid.remove(); turnInfo.remove(); timerBar.remove(); style.remove(); if (turnTimerInterval) clearInterval(turnTimerInterval); },
+    destroy() { grid.remove(); turnInfo.remove(); timerBar.remove(); style.remove(); if (turnTimerInterval) clearInterval(turnTimerInterval); container.classList.remove('tictactoe-container', 'game-container'); releaseWakeLock(); for (const fn of cleanups) fn(); },
   };
 }
 

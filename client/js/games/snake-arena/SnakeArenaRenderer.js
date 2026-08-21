@@ -2,8 +2,12 @@ import { GameLoop } from '../../engine/GameLoop.js';
 import { InputManager } from '../../engine/InputManager.js';
 import { ARENA } from '../../shared/constants/snakeArena.js';
 import { actionFeedback } from '../../ui/components/ActionFeedback.js';
+import { addFullscreenBtn, acquireWakeLock } from '../shared/gameUtils.js';
 
 export function create({ container, controlsContainer, state, playerId, onAction }) {
+  container.classList.add('snake-arena-container', 'game-container');
+  const cleanups = [];
+
   // --- Canvas setup ---
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -103,8 +107,13 @@ export function create({ container, controlsContainer, state, playerId, onAction
   input.bindKeyboard({
     ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
     w: 'up', s: 'down', a: 'left', d: 'right',
+    z: 'up', q: 'left', // AZERTY
   });
   input.bindSwipe();
+
+  const fsCleanup = addFullscreenBtn(container);
+  if (fsCleanup) cleanups.push(fsCleanup);
+  const releaseWakeLock = acquireWakeLock();
 
   // D-pad
   const dpad = document.createElement('div');
@@ -801,6 +810,9 @@ export function create({ container, controlsContainer, state, playerId, onAction
       loop.stop();
       input.destroy();
       resizeObserver.disconnect();
+      container.classList.remove('snake-arena-container', 'game-container');
+      releaseWakeLock();
+      for (const fn of cleanups) fn();
     },
   };
 }

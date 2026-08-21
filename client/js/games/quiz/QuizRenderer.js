@@ -1,22 +1,46 @@
 import { el } from '../../ui/components/dom.js';
 import { actionFeedback } from '../../ui/components/ActionFeedback.js';
+import { addFullscreenBtn, acquireWakeLock } from '../shared/gameUtils.js';
 
 export function create({ container, controlsContainer, state, playerId, onAction }) {
+  container.classList.add('quiz-container', 'game-container');
   let gameState = state;
   let answered = false;
+  const cleanups = [];
 
   const questionBox = document.createElement('div');
   questionBox.className = 'card';
-  questionBox.style.cssText = 'text-align:center;padding:24px';
+  questionBox.style.cssText = 'text-align:center;padding:24px;width:100%';
   container.appendChild(questionBox);
 
   const answersBox = document.createElement('div');
-  answersBox.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-top:16px';
+  answersBox.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-top:16px;width:100%';
   controlsContainer.appendChild(answersBox);
 
   const statusText = document.createElement('div');
   statusText.className = 'text-center text-muted mt-sm';
   controlsContainer.appendChild(statusText);
+
+  const fsCleanup = addFullscreenBtn(container);
+  if (fsCleanup) cleanups.push(fsCleanup);
+  const releaseWakeLock = acquireWakeLock();
+
+  // Keyboard: 1-4 for answers
+  const keyHandler = (e) => {
+    if (answered) return;
+    const idx = parseInt(e.key) - 1;
+    const q = gameState.question;
+    if (q && idx >= 0 && idx < (q.answers || []).length) {
+      e.preventDefault();
+      answered = true;
+      onAction({ answer: q.answers[idx] });
+      const btns = answersBox.querySelectorAll('button');
+      if (btns[idx]) { btns[idx].style.background = 'var(--color-primary)'; btns[idx].style.color = '#fff'; }
+      statusText.textContent = '⏳ En attente des autres joueurs...';
+    }
+  };
+  document.addEventListener('keydown', keyHandler);
+  cleanups.push(() => document.removeEventListener('keydown', keyHandler));
 
   let questionTimer = null;
 
@@ -40,7 +64,7 @@ export function create({ container, controlsContainer, state, playerId, onAction
       const btn = document.createElement('button');
       btn.className = 'btn btn-secondary btn-full';
       btn.style.cssText = 'text-align:left;padding:14px 18px;font-size:1rem';
-      btn.textContent = answer;
+      btn.textContent = `${i + 1}. ${answer}`;
       btn.addEventListener('click', () => {
         if (answered) return;
         answered = true;
@@ -124,6 +148,9 @@ export function create({ container, controlsContainer, state, playerId, onAction
       questionBox.remove();
       answersBox.remove();
       statusText.remove();
+      container.classList.remove('quiz-container', 'game-container');
+      releaseWakeLock();
+      for (const fn of cleanups) fn();
     },
   };
 }
