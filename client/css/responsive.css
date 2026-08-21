@@ -1,0 +1,88 @@
+/* ─── Responsive — Mobile First, All Devices ─── */
+
+/* Small phones (iPhone SE, etc.) */
+@media (max-width: 374px) {
+  :root { font-size: 14px; }
+  #app { padding: var(--space-sm); }
+  .room-code { font-size: var(--font-size-2xl); letter-spacing: 0.15em; }
+  .btn-lg { padding: var(--space-md) var(--space-lg); }
+}
+
+/* Standard phones */
+@media (min-width: 375px) and (max-width: 479px) {
+  .game-grid { grid-template-columns: 1fr; gap: var(--space-sm); }
+}
+
+/* Large phones / Small tablets */
+@media (min-width: 480px) and (max-width: 767px) {
+  .game-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Tablets */
+@media (min-width: 768px) {
+  #app { max-width: 680px; padding: var(--space-lg); }
+  .game-grid { grid-template-columns: repeat(2, 1fr); gap: var(--space-lg); }
+  .screen-header h1 { font-size: var(--font-size-3xl); }
+  .game-area { min-height: 400px; }
+}
+
+/* Desktop / Large tablets */
+@media (min-width: 1024px) {
+  #app { max-width: 860px; }
+  .game-grid { grid-template-columns: repeat(3, 1fr); }
+
+  .card:hover {
+    transform: translateY(-4px) scale(1.02);
+  }
+}
+
+/* Wide screens */
+@media (min-width: 1280px) {
+  #app { max-width: 1000px; }
+}
+
+/* ─── Landscape (phones held sideways for gaming) ─── */
+@media (orientation: landscape) and (max-height: 500px) {
+  #app { max-width: 100%; padding: var(--space-sm) var(--space-lg); }
+  .screen { flex-direction: row; flex-wrap: wrap; gap: var(--space-md); }
+  .screen-header { padding: var(--space-sm) 0; width: 100%; }
+  .screen-header h1 { font-size: var(--font-size-lg); }
+
+  .game-area {
+    min-height: 0;
+    height: calc(100dvh - 80px);
+    width: 100%;
+  }
+
+  .scoreboard { padding: var(--space-sm) var(--space-md); }
+  .btn-lg { min-height: 44px; padding: var(--space-sm) var(--space-lg); }
+}
+
+/* ─── Touch devices — larger hit areas ─── */
+@media (pointer: coarse) {
+  .btn { min-height: 52px; }
+  .btn-lg { min-height: 58px; }
+  .input { min-height: 52px; font-size: 16px; /* prevent iOS zoom */ }
+  .player-item { padding: var(--space-md) var(--space-lg); }
+}
+
+/* ─── Hover-capable devices only ─── */
+@media (hover: none) {
+  .card:hover { transform: none; box-shadow: var(--shadow-md); }
+  .btn-primary:hover { transform: none; }
+  .btn-secondary:hover { transform: none; }
+  .player-item:hover { transform: none; }
+}
+
+/* ─── High DPI / Retina ─── */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .game-area canvas {
+    image-rendering: -webkit-optimize-contrast;
+  }
+}
+
+/* ─── Tall screens (avoid huge empty spaces) ─── */
+@media (min-height: 900px) and (max-width: 767px) {
+  .screen-header { padding: var(--space-2xl) 0 var(--space-xl); }
+  .game-area { min-height: 360px; }
+}
