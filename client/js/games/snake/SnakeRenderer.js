@@ -45,9 +45,15 @@ export function create({ container, controlsContainer, state, playerId, onAction
 
   // --- Keyboard (PC) + AZERTY ---
   const dirMap = { up: 'UP', down: 'DOWN', left: 'LEFT', right: 'RIGHT' };
+  const OPPOSITE = { UP: 'DOWN', DOWN: 'UP', LEFT: 'RIGHT', RIGHT: 'LEFT' };
   for (const dir of ['up', 'down', 'left', 'right']) {
     input.on(dir, () => {
-      onAction({ direction: dirMap[dir] });
+      const d = dirMap[dir];
+      const me = localSnakes[playerId];
+      if (me?.alive && me.direction !== OPPOSITE[d]) {
+        me.direction = d;
+      }
+      onAction({ direction: d });
       input.vibrate(10);
     });
   }
@@ -80,6 +86,10 @@ export function create({ container, controlsContainer, state, playerId, onAction
       btn.setAttribute('aria-label', d);
       btn.addEventListener('pointerdown', (e) => {
         e.preventDefault();
+        const me = localSnakes[playerId];
+        if (me?.alive && me.direction !== OPPOSITE[d]) {
+          me.direction = d;
+        }
         onAction({ direction: d });
         input.vibrate(10);
       });

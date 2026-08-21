@@ -32,7 +32,7 @@ export class InputManager {
   bindKeyboard(keyMap) {
     // keyMap: { 'ArrowUp': 'up', 'w': 'up', ... }
     const handler = (e) => {
-      const action = keyMap[e.key];
+      const action = keyMap[e.key] || keyMap[e.key.toLowerCase()];
       if (action) {
         e.preventDefault();
         this.#emit(action, { source: 'keyboard', key: e.key });

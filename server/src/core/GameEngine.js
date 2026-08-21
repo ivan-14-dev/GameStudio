@@ -82,12 +82,13 @@ export class GameEngine {
     session.startedAt = Date.now();
     this.#eventBus.emit(EVENTS.GAME_START, { roomId: session.roomId });
 
-    // If the game defines a tick rate, start a server tick loop
+    // If the game defines a tick rate or interval, start a server tick loop
     const tickRate = session.gameModule.getMetadata?.().tickRate;
-    if (tickRate && tickRate > 0) {
+    const interval = session.state.tickInterval || (tickRate > 0 ? 1000 / tickRate : 0);
+    if (interval > 0) {
       session.tickTimer = setInterval(() => {
         this.#tick(session);
-      }, 1000 / tickRate);
+      }, interval);
     }
 
     // If there's a time limit, set a timer
@@ -262,8 +263,9 @@ export class GameEngine {
     session.paused = false;
     session.status = GAME_STATUS.PLAYING;
     const tickRate = session.gameModule.getMetadata?.().tickRate;
-    if (tickRate && tickRate > 0) {
-      session.tickTimer = setInterval(() => this.#tick(session), 1000 / tickRate);
+    const interval = session.state.tickInterval || (tickRate > 0 ? 1000 / tickRate : 0);
+    if (interval > 0) {
+      session.tickTimer = setInterval(() => this.#tick(session), interval);
     }
     this.#resetTurnTimer(session);
     this.#eventBus.emit(EVENTS.GAME_RESUME, { roomId });
