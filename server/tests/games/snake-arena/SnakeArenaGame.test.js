@@ -18,7 +18,7 @@ describe('SnakeArenaGame', () => {
     it('returns correct metadata', () => {
       const meta = SnakeArenaGame.getMetadata();
       assert.equal(meta.id, 'snake-arena');
-      assert.equal(meta.minPlayers, 2);
+      assert.equal(meta.minPlayers, 1);
       assert.equal(meta.maxPlayers, 8);
       assert.ok(meta.categories.includes('arcade'));
     });

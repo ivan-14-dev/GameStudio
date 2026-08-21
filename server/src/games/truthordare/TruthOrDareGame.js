@@ -59,7 +59,7 @@ export default {
       name: 'Action ou Vérité',
       description: 'Le jeu classique avec du contenu personnalisable',
       icon: '🎭',
-      minPlayers: 2,
+      minPlayers: 1,
       maxPlayers: 12,
       tickRate: 0,
       categories: ['party', 'social'],

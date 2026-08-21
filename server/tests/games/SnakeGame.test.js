@@ -13,7 +13,7 @@ describe('SnakeGame', () => {
     const m = SnakeGame.getMetadata();
     assert.equal(m.id, 'snake');
     assert.equal(m.tickRate, 10);
-    assert.equal(m.minPlayers, 2);
+    assert.equal(m.minPlayers, 1);
     assert.equal(m.maxPlayers, 4);
   });
 

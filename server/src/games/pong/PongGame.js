@@ -13,7 +13,7 @@ export default {
       name: 'Pong Duel',
       description: 'Le classique revisité en multijoueur',
       icon: '🏓',
-      minPlayers: 2,
+      minPlayers: 1,
       maxPlayers: 4,
       tickRate: 60,
       categories: ['arcade', 'sport'],
@@ -209,6 +209,19 @@ export default {
   },
 
   destroy() {},
+
+  getBotAction(state, botId) {
+    const paddle = state.paddles[botId];
+    if (!paddle) return null;
+    const ball = state.ball;
+    const isH = paddle.side === 'top' || paddle.side === 'bottom';
+    const target = isH ? ball.x : ball.y;
+    const pos = isH ? paddle.x + paddle.width / 2 : paddle.y + paddle.height / 2;
+    const err = (Math.random() - 0.5) * 30;
+    if (target + err > pos + 10) return { move: isH ? 'right' : 'down' };
+    if (target + err < pos - 10) return { move: isH ? 'left' : 'up' };
+    return null;
+  },
 
   _getPositions(count) {
     const positions = [

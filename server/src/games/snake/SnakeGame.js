@@ -10,7 +10,7 @@ export default {
       name: 'Snake Duel',
       description: 'Compétition de serpents multijoueur',
       icon: '🐍',
-      minPlayers: 2,
+      minPlayers: 1,
       maxPlayers: 4,
       tickRate: 10,
       categories: ['arcade', 'action'],
@@ -138,9 +138,9 @@ export default {
 
   checkGameEnd(state) {
     const alive = Object.entries(state.snakes).filter(([, s]) => s.alive);
-    if (alive.length <= 1) {
-      return { finished: true, winner: alive[0]?.[0] || null };
-    }
+    const total = Object.keys(state.snakes).length;
+    if (total === 1) return alive.length === 0 ? { finished: true, winner: Object.keys(state.snakes)[0] } : { finished: false };
+    if (alive.length <= 1) return { finished: true, winner: alive[0]?.[0] || null };
     return { finished: false };
   },
 
@@ -188,6 +188,41 @@ export default {
   },
 
   destroy() {},
+
+  getBotAction(state, botId) {
+    const snake = state.snakes[botId];
+    if (!snake?.alive) return null;
+    const [hx, hy] = snake.body[0];
+    const food = state.food;
+    const size = state.size;
+    const occupied = new Set();
+    for (const s of Object.values(state.snakes)) {
+      if (!s.alive) continue;
+      for (const [x, y] of s.body) occupied.add(`${x},${y}`);
+    }
+    for (const [x, y] of (state.obstacles || [])) occupied.add(`${x},${y}`);
+
+    const dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
+    const deltas = { UP: [0, -1], DOWN: [0, 1], LEFT: [-1, 0], RIGHT: [1, 0] };
+    const opposite = { UP: 'DOWN', DOWN: 'UP', LEFT: 'RIGHT', RIGHT: 'LEFT' };
+    const safe = dirs.filter(d => {
+      if (d === opposite[snake.direction]) return false;
+      const [dx, dy] = deltas[d];
+      const nx = hx + dx, ny = hy + dy;
+      return nx >= 0 && nx < size && ny >= 0 && ny < size && !occupied.has(`${nx},${ny}`);
+    });
+    if (safe.length === 0) return { direction: snake.direction };
+    if (food) {
+      const toward = safe.filter(d => {
+        const [dx, dy] = deltas[d];
+        const dist = Math.abs(hx + dx - food[0]) + Math.abs(hy + dy - food[1]);
+        const curr = Math.abs(hx - food[0]) + Math.abs(hy - food[1]);
+        return dist < curr;
+      });
+      if (toward.length > 0) return { direction: toward[Math.floor(Math.random() * toward.length)] };
+    }
+    return { direction: safe[Math.floor(Math.random() * safe.length)] };
+  },
 
   // Private helpers
   _getSpawnPositions(size, count) {

@@ -97,6 +97,13 @@ export class RoomManager {
     return room;
   }
 
+  addBot(roomId) {
+    const room = this.#rooms.get(roomId);
+    if (!room) return;
+    const n = room.players.filter(p => p.id.startsWith('bot-')).length + 1;
+    room.players.push({ id: `bot-${n}`, name: `🤖 Bot ${n}`, ready: true, joinedAt: Date.now(), connected: true, isBot: true });
+  }
+
   startGame(roomId) {
     const room = this.#rooms.get(roomId);
     if (!room || room.status !== ROOM_STATUS.READY) return null;

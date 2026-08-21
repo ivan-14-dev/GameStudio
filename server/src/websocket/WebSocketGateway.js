@@ -182,6 +182,11 @@ export class WebSocketGateway {
       return;
     }
 
+    // Solo play: add bot if game requires an opponent
+    if (startedRoom.players.length === 1 && gameModule.getBotAction) {
+      this.#roomManager.addBot(room.roomId);
+    }
+
     await this.#gameEngine.createSession(startedRoom, gameModule);
 
     this.#gameEngine.startCountdown(room.roomId,
@@ -368,6 +373,16 @@ export class WebSocketGateway {
       this.#connections.broadcast(roomId, {
         type: EVENTS.GAME_TICK,
         data,
+      });
+    });
+
+    this.#eventBus.on('bot:action', ({ roomId, playerId, action, result, scores }) => {
+      this.#connections.broadcast(roomId, {
+        type: EVENTS.GAME_ACTION,
+        playerId,
+        action,
+        result,
+        scores,
       });
     });
   }

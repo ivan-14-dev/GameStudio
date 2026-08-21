@@ -8,7 +8,7 @@ export default {
       name: 'Tic Tac Toe',
       description: 'Morpion multijoueur avec grilles variables',
       icon: '❌',
-      minPlayers: 2,
+      minPlayers: 1,
       maxPlayers: 4,
       tickRate: 0,
       categories: ['strategy', 'classic'],
@@ -103,6 +103,17 @@ export default {
   },
 
   destroy() {},
+
+  getBotAction(state, botId) {
+    const idx = state.currentTurn % state.playerOrder.length;
+    if (state.playerOrder[idx] !== botId || state.winner) return null;
+    const empty = [];
+    for (let r = 0; r < state.size; r++) for (let c = 0; c < state.size; c++) if (state.board[r][c] === null) empty.push({ row: r, col: c });
+    if (empty.length === 0) return null;
+    const mid = Math.floor(state.size / 2);
+    if (state.board[mid][mid] === null) return { row: mid, col: mid };
+    return empty[Math.floor(Math.random() * empty.length)];
+  },
 
   _getWinLine(board, symbol, winLen, size) {
     const dirs = [[1, 0], [0, 1], [1, 1], [1, -1]];

@@ -8,7 +8,7 @@ export default {
       name: 'Puissance 4',
       description: 'Alignez 4 jetons avant vos adversaires',
       icon: '🔴',
-      minPlayers: 2,
+      minPlayers: 1,
       maxPlayers: 4,
       tickRate: 0,
       categories: ['strategy', 'classic'],
@@ -107,6 +107,18 @@ export default {
   },
 
   destroy() {},
+
+  getBotAction(state, botId) {
+    const idx = state.currentTurn % state.playerOrder.length;
+    if (state.playerOrder[idx] !== botId || state.winner) return null;
+    const valid = [];
+    for (let c = 0; c < state.cols; c++) if (state.board[0][c] === null) valid.push(c);
+    if (valid.length === 0) return null;
+    // Prefer center columns
+    valid.sort((a, b) => Math.abs(a - state.cols / 2) - Math.abs(b - state.cols / 2));
+    const pick = Math.random() < 0.6 ? 0 : Math.floor(Math.random() * valid.length);
+    return { col: valid[pick] };
+  },
 
   _getWinLine(board, row, col, pid, n, rows, cols) {
     const dirs = [[1, 0], [0, 1], [1, 1], [1, -1]];

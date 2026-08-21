@@ -13,16 +13,16 @@ function getWsUrl() {
 }
 
 const GAME_INFO = {
-  snake: { icon: '🐍', name: 'Snake Duel', players: '2–4', desc: 'Compétition de serpents' },
-  pong: { icon: '🏓', name: 'Pong Duel', players: '2–4', desc: 'Le classique revisité' },
-  tictactoe: { icon: '❌', name: 'Tic Tac Toe', players: '2–4', desc: 'Morpion multijoueur' },
-  connect4: { icon: '🔴', name: 'Puissance 4', players: '2–4', desc: 'Alignez 4 jetons' },
-  rps: { icon: '✊', name: 'Pierre Feuille Ciseaux', players: '2–8', desc: 'Rounds et combos' },
-  memory: { icon: '🧠', name: 'Memory Duel', players: '2–4', desc: 'Trouvez les paires' },
-  reaction: { icon: '⚡', name: 'Réaction', players: '2–8', desc: 'Le plus rapide gagne' },
-  quiz: { icon: '❓', name: 'Quiz Duel', players: '2–8', desc: 'Testez vos connaissances' },
-  truthordare: { icon: '🎭', name: 'Action ou Vérité', players: '2–12', desc: 'Contenu personnalisable' },
-  'snake-arena': { icon: '🐍', name: 'Snake Arena', players: '2–8', desc: 'Arène compétitive avec pouvoirs' },
+  snake: { icon: '🐍', name: 'Snake Duel', players: '1–4', desc: 'Compétition de serpents' },
+  pong: { icon: '🏓', name: 'Pong Duel', players: '1–4', desc: 'Le classique revisité' },
+  tictactoe: { icon: '❌', name: 'Tic Tac Toe', players: '1–4', desc: 'Morpion multijoueur' },
+  connect4: { icon: '🔴', name: 'Puissance 4', players: '1–4', desc: 'Alignez 4 jetons' },
+  rps: { icon: '✊', name: 'Pierre Feuille Ciseaux', players: '1–8', desc: 'Rounds et combos' },
+  memory: { icon: '🧠', name: 'Memory Duel', players: '1–4', desc: 'Trouvez les paires' },
+  reaction: { icon: '⚡', name: 'Réaction', players: '1–8', desc: 'Le plus rapide gagne' },
+  quiz: { icon: '❓', name: 'Quiz Duel', players: '1–8', desc: 'Testez vos connaissances' },
+  truthordare: { icon: '🎭', name: 'Action ou Vérité', players: '1–12', desc: 'Contenu personnalisable' },
+  'snake-arena': { icon: '🐍', name: 'Snake Arena', players: '1–8', desc: 'Arène compétitive avec pouvoirs' },
 };
 
 export function GameListScreen(container) {
@@ -62,7 +62,7 @@ export function CreateGameScreen(container, state) {
   const info = GAME_INFO[selectedGame] || GAME_INFO.snake;
   const maxPlayersForGame = parseInt((info.players || '2–4').split('–')[1]) || 4;
 
-  let maxPlayers = Math.min(4, maxPlayersForGame);
+  let maxPlayers = 1;
   let difficulty = 1;
 
   const screen = el('div', { class: 'screen' },
@@ -87,11 +87,12 @@ export function CreateGameScreen(container, state) {
         maxlength: '20',
         value: '',
       }),
-      el('label', {}, 'Joueurs max'),
+      el('label', {}, 'Mode de jeu'),
       el('select', { class: 'input', id: 'maxPlayers', onChange: (e) => { maxPlayers = +e.target.value; } },
+        el('option', { value: '1', selected: true }, '🎮 Solo (1 joueur)'),
         ...Array.from({ length: maxPlayersForGame - 1 }, (_, i) => {
           const n = i + 2;
-          return el('option', { value: String(n), ...(n === Math.min(4, maxPlayersForGame) ? { selected: true } : {}) }, `${n} joueurs`);
+          return el('option', { value: String(n) }, `👥 ${n} joueurs`);
         }),
       ),
       el('label', {}, `Niveau de difficulté`),

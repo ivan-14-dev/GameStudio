@@ -136,11 +136,18 @@ export class GameEngine {
     // Reset turn timer for turn-based games
     this.#resetTurnTimer(session);
 
+    // Schedule bot actions for turn-based/simultaneous games
+    this.#scheduleBotActions(session);
+
     return { valid: true, result, scores: { ...session.scores } };
   }
 
   #tick(session) {
     if (session.status !== GAME_STATUS.PLAYING) return;
+
+    // Bot actions for tick-based games (before movement)
+    this.#applyBotActions(session);
+
     const tickResult = session.gameModule.tick?.(session.state);
     if (tickResult) {
       this.#eventBus.emit(EVENTS.GAME_TICK, { roomId: session.roomId, data: tickResult });
@@ -276,5 +283,40 @@ export class GameEngine {
     if (session.tickTimer) { clearInterval(session.tickTimer); session.tickTimer = null; }
     if (session.roundTimer) { clearTimeout(session.roundTimer); session.roundTimer = null; }
     if (session.turnTimer) { clearTimeout(session.turnTimer); session.turnTimer = null; }
+  }
+
+  #applyBotActions(session) {
+    if (!session.gameModule.getBotAction) return;
+    for (const [pid] of session.players) {
+      if (!pid.startsWith('bot-')) continue;
+      const action = session.gameModule.getBotAction(session.state, pid);
+      if (action) {
+        const player = session.players.get(pid);
+        const v = session.gameModule.validateAction(session.state, action, player);
+        if (v === true || v == null) {
+          session.gameModule.applyAction(session.state, action, player);
+        }
+      }
+    }
+  }
+
+  #scheduleBotActions(session) {
+    if (!session.gameModule.getBotAction || session.status !== GAME_STATUS.PLAYING) return;
+    const meta = session.gameModule.getMetadata?.();
+    if ((meta?.tickRate > 0 || session.state.tickInterval) && meta?.id !== 'rps' && meta?.id !== 'quiz') return;
+    for (const [pid] of session.players) {
+      if (!pid.startsWith('bot-')) continue;
+      setTimeout(() => {
+        const s = this.#sessions.get(session.roomId);
+        if (!s || s.status !== GAME_STATUS.PLAYING) return;
+        const action = s.gameModule.getBotAction(s.state, pid);
+        if (action) {
+          const result = this.processAction(s.roomId, pid, action);
+          if (result.valid) {
+            this.#eventBus.emit('bot:action', { roomId: s.roomId, playerId: pid, action, result: result.result, scores: result.scores });
+          }
+        }
+      }, 600 + Math.random() * 1200);
+    }
   }
 }

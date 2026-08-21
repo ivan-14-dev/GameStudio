@@ -41,7 +41,7 @@ export default {
       name: 'Quiz Duel',
       description: 'Testez vos connaissances en duel',
       icon: '❓',
-      minPlayers: 2,
+      minPlayers: 1,
       maxPlayers: 8,
       tickRate: 0,
       categories: ['trivia', 'knowledge'],

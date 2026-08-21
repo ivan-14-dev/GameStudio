@@ -29,7 +29,7 @@ export default {
       name: 'Snake Arena',
       description: 'Arène de serpents multijoueur avec pouvoirs et événements dynamiques',
       icon: '🐍',
-      minPlayers: 2,
+      minPlayers: 1,
       maxPlayers: 8,
       tickRate: 10,
       categories: ['arcade', 'action', 'strategy'],

@@ -6,11 +6,14 @@ export function checkWinCondition(state, mode) {
   const alivePlayers = [...state.players.values()].filter(p => p.alive);
 
   switch (mode) {
-    case ARENA.MODES.SURVIVAL:
+    case ARENA.MODES.SURVIVAL: {
+      const total = state.players.size;
+      if (total === 1) return alivePlayers.length === 0 ? { finished: true, winner: [...state.players.keys()][0] } : { finished: false };
       if (alivePlayers.length <= 1) {
         return { finished: true, winner: alivePlayers[0]?.id || null };
       }
       return { finished: false };
+    }
 
     case ARENA.MODES.SCORE: {
       const target = state.config?.scoreTarget || 1000;
@@ -35,6 +38,8 @@ export function checkWinCondition(state, mode) {
       const target = state.config?.eliminationTarget || 5;
       const hunter = [...state.players.values()].find(p => p.stats.eliminations >= target);
       if (hunter) return { finished: true, winner: hunter.id };
+      const total = state.players.size;
+      if (total === 1) return alivePlayers.length === 0 ? { finished: true, winner: [...state.players.keys()][0] } : { finished: false };
       if (alivePlayers.length <= 1) {
         return { finished: true, winner: alivePlayers[0]?.id || null };
       }
@@ -60,11 +65,14 @@ export function checkWinCondition(state, mode) {
       }
       return { finished: false };
 
-    default:
+    default: {
+      const total = state.players.size;
+      if (total === 1) return alivePlayers.length === 0 ? { finished: true, winner: [...state.players.keys()][0] } : { finished: false };
       if (alivePlayers.length <= 1) {
         return { finished: true, winner: alivePlayers[0]?.id || null };
       }
       return { finished: false };
+    }
   }
 }
 

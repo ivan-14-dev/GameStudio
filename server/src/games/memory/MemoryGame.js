@@ -13,7 +13,7 @@ export default {
       name: 'Memory Duel',
       description: 'Trouvez les paires avant vos adversaires',
       icon: '🧠',
-      minPlayers: 2,
+      minPlayers: 1,
       maxPlayers: 4,
       tickRate: 0,
       categories: ['puzzle', 'memory'],

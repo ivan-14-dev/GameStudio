@@ -10,7 +10,7 @@ export default {
       name: 'Pierre Feuille Ciseaux',
       description: 'Le classique en multijoueur avec rounds et combos',
       icon: '✊',
-      minPlayers: 2,
+      minPlayers: 1,
       maxPlayers: 8,
       tickRate: 0,
       categories: ['party', 'classic'],
@@ -96,6 +96,13 @@ export default {
   },
 
   destroy() {},
+
+  getBotAction(state, botId) {
+    if (state.choices[botId] || state.winner) return null;
+    const humans = state.playerOrder.filter(pid => !pid.startsWith('bot-'));
+    if (!humans.every(pid => state.choices[pid])) return null;
+    return { choice: ['rock', 'paper', 'scissors'][Math.floor(Math.random() * 3)] };
+  },
 
   _resolveRound(state) {
     const choices = state.choices;
