@@ -2,7 +2,13 @@
   "buildCommand": null,
   "outputDirectory": "client",
   "framework": null,
+  "headers": [
+    {
+      "source": "/js/(.*)",
+      "headers": [{ "key": "Content-Type", "value": "application/javascript" }]
+    }
+  ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!js/|css/|assets/).*)", "destination": "/index.html" }
   ]
 }
