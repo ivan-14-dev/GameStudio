@@ -30,7 +30,15 @@ export class WebSocketClient {
 
     this.#playerId = player.id;
     this.#playerName = playerName || player.name || 'Player';
+
+    // Already connected to the same server — skip reconnect
+    if (this.connected && this.#url?.startsWith(url)) {
+      eventBus.emit('ws:connected', { playerId: this.#playerId });
+      return;
+    }
+
     this.#url = `${url}?name=${encodeURIComponent(this.#playerName)}&playerId=${this.#playerId}`;
+    this.#reconnectAttempts = 0;
     this.#doConnect();
   }
 

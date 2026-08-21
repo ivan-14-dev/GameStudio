@@ -110,16 +110,29 @@ export function CreateGameScreen(container, state) {
         if (!name) { showToast('Entre ton nom !', 'error'); return; }
         soundManager.play('click');
 
-        wsClient.connect(getWsUrl(), name);
-
-        const unsub = eventBus.on('ws:connected', () => {
-          unsub();
+        const doCreate = () => {
           wsClient.createRoom(selectedGame, { maxPlayers, difficulty });
+        };
+
+        if (wsClient.connected) {
+          doCreate();
+        } else {
+          wsClient.connect(getWsUrl(), name);
+          const unsub = eventBus.on('ws:connected', () => { unsub(); doCreate(); });
+        }
+
+        const unsubErr = eventBus.on('ws:error', () => {
+          showToast('Impossible de se connecter au serveur', 'error');
         });
 
         const unsubRoom = eventBus.on(EVENTS.ROOM_CREATE, (msg) => {
-          unsubRoom();
+          unsubRoom(); unsubErr();
           window.app.router.navigate('/room', { room: msg.room });
+        });
+
+        const unsubRoomErr = eventBus.on(EVENTS.ROOM_ERROR, (msg) => {
+          unsubRoomErr(); unsubErr();
+          showToast(msg.error || 'Erreur création de salle', 'error');
         });
       },
     }, '🚀 Créer la partie'),
@@ -164,21 +177,28 @@ export function JoinGameScreen(container, state) {
         if (!code || code.length < 4) { showToast('Code invalide', 'error'); return; }
 
         soundManager.play('click');
-        wsClient.connect(getWsUrl(), name);
 
-        const unsub = eventBus.on('ws:connected', () => {
-          unsub();
-          wsClient.joinRoom(code);
+        const doJoin = () => { wsClient.joinRoom(code); };
+
+        if (wsClient.connected) {
+          doJoin();
+        } else {
+          wsClient.connect(getWsUrl(), name);
+          const unsub = eventBus.on('ws:connected', () => { unsub(); doJoin(); });
+        }
+
+        const unsubWsErr = eventBus.on('ws:error', () => {
+          showToast('Impossible de se connecter au serveur', 'error');
         });
 
         const unsubJoin = eventBus.on(EVENTS.ROOM_JOIN, (msg) => {
-          unsubJoin();
+          unsubJoin(); unsubWsErr();
           window.app.router.navigate('/room', { room: msg.room });
         });
 
         const unsubErr = eventBus.on(EVENTS.ROOM_ERROR, (msg) => {
-          unsubErr();
-          showToast(msg.error, 'error');
+          unsubErr(); unsubWsErr();
+          showToast(msg.error || 'Salle introuvable', 'error');
         });
       },
     }, '🚪 Rejoindre'),
