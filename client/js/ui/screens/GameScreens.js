@@ -4,6 +4,14 @@ import { wsClient } from '../../multiplayer/WebSocketClient.js';
 import { eventBus } from '../../core/EventBus.js';
 import { EVENTS } from '../../shared/constants/events.js';
 
+function getWsUrl() {
+  if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+    return `ws://${location.hostname}:${location.port || 3000}/ws`;
+  }
+  const serverHost = window.__WS_SERVER__ || 'duoplay-server.onrender.com';
+  return `wss://${serverHost}/ws`;
+}
+
 const GAME_INFO = {
   snake: { icon: '🐍', name: 'Snake Duel', players: '2–4', desc: 'Compétition de serpents' },
   pong: { icon: '🏓', name: 'Pong Duel', players: '2–4', desc: 'Le classique revisité' },
@@ -102,9 +110,7 @@ export function CreateGameScreen(container, state) {
         if (!name) { showToast('Entre ton nom !', 'error'); return; }
         soundManager.play('click');
 
-        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-        const wsUrl = `${proto}://${location.hostname}:${location.port || 3000}/ws`;
-        wsClient.connect(wsUrl, name);
+        wsClient.connect(getWsUrl(), name);
 
         const unsub = eventBus.on('ws:connected', () => {
           unsub();
@@ -158,9 +164,7 @@ export function JoinGameScreen(container, state) {
         if (!code || code.length < 4) { showToast('Code invalide', 'error'); return; }
 
         soundManager.play('click');
-        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-        const wsUrl = `${proto}://${location.hostname}:${location.port || 3000}/ws`;
-        wsClient.connect(wsUrl, name);
+        wsClient.connect(getWsUrl(), name);
 
         const unsub = eventBus.on('ws:connected', () => {
           unsub();
