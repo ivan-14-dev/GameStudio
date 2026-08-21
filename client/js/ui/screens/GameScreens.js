@@ -8,7 +8,7 @@ function getWsUrl() {
   if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
     return `ws://${location.hostname}:${location.port || 3000}/ws`;
   }
-  const serverHost = window.__WS_SERVER__ || 'duoplay-server.onrender.com';
+  const serverHost = window.__WS_SERVER__ || 'gamestudio-2pl4.onrender.com';
   return `wss://${serverHost}/ws`;
 }
 
