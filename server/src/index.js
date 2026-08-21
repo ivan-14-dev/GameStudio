@@ -58,11 +58,6 @@ await app.register(fastifyStatic, {
   root: join(__dirname, '../../client'),
   prefix: '/',
 });
-await app.register(fastifyStatic, {
-  root: join(__dirname, '../../shared'),
-  prefix: '/shared/',
-  decorateReply: false,
-});
 await app.register(fastifyWebSocket);
 
 // --- REST API ---
