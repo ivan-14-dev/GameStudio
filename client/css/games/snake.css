@@ -1,0 +1,179 @@
+/* ─── Snake Duel ─── */
+.snake-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.snake-canvas {
+  display: block;
+  border-radius: var(--border-radius);
+  background: #111827;
+  box-shadow: var(--shadow-lg);
+  max-width: 100%;
+}
+
+/* ─── HUD overlay ─── */
+.snake-hud {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+  z-index: var(--z-hud);
+}
+
+.snake-hud-btn {
+  pointer-events: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--border-radius-full);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.snake-hud-btn:active {
+  background: var(--color-primary);
+  transform: scale(0.92);
+}
+
+.snake-gyro-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: var(--border-radius-full);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 300ms;
+}
+
+.snake-gyro-indicator.visible {
+  opacity: 1;
+}
+
+/* ─── D-Pad ─── */
+.snake-dpad {
+  display: none;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 180px;
+  margin: 0 auto;
+}
+
+.snake-dpad-btn {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--border-radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition-fast), transform 60ms;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.snake-dpad-btn:active {
+  background: var(--color-primary);
+  transform: scale(0.9);
+  box-shadow: var(--glow-primary);
+}
+
+.snake-dpad-spacer {
+  visibility: hidden;
+}
+
+/* ─── Spectator label ─── */
+.snake-spectator {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  padding: 4px 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: var(--border-radius-full);
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-hud);
+}
+
+/* ─── Mobile: show D-pad, bigger canvas ─── */
+@media (pointer: coarse) {
+  .snake-dpad {
+    display: grid;
+  }
+
+  .snake-dpad-btn {
+    min-height: 58px;
+    font-size: 1.8rem;
+  }
+}
+
+/* ─── Landscape: canvas fills height, dpad beside it ─── */
+@media (orientation: landscape) and (max-height: 500px) {
+  .snake-container {
+    flex-direction: row;
+    align-items: stretch;
+    height: calc(100dvh - 60px);
+  }
+
+  .snake-canvas {
+    height: 100%;
+    width: auto;
+    flex-shrink: 0;
+  }
+
+  .snake-dpad {
+    width: 140px;
+    align-self: center;
+    flex-shrink: 0;
+  }
+}
+
+/* ─── Fullscreen overrides ─── */
+.snake-container:fullscreen,
+.snake-container:-webkit-full-screen {
+  background: #05060b;
+  justify-content: center;
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+}
+
+.snake-container:fullscreen .snake-canvas,
+.snake-container:-webkit-full-screen .snake-canvas {
+  border-radius: 0;
+}
+
+/* ─── Desktop: keyboard hint ─── */
+@media (hover: hover) and (pointer: fine) {
+  .snake-dpad {
+    display: none !important;
+  }
+}

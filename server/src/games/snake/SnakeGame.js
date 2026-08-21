@@ -127,7 +127,7 @@ export default {
 
     return {
       positions: Object.fromEntries(
-        Object.entries(state.snakes).map(([pid, s]) => [pid, { body: s.body, head: s.body[0], length: s.body.length, alive: s.alive }])
+        Object.entries(state.snakes).map(([pid, s]) => [pid, { body: s.body, head: s.body[0], length: s.body.length, alive: s.alive, direction: s.direction }])
       ),
       food: state.food,
       events: results,

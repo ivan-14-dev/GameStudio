@@ -2,27 +2,47 @@ import { GameLoop } from '../../engine/GameLoop.js';
 import { InputManager } from '../../engine/InputManager.js';
 import { actionFeedback } from '../../ui/components/ActionFeedback.js';
 
+const DIR_ARROWS = { UP: '↑', DOWN: '↓', LEFT: '←', RIGHT: '→' };
+
 export function create({ container, controlsContainer, state, playerId, onAction }) {
+  container.classList.add('snake-container');
   const canvas = document.createElement('canvas');
+  canvas.className = 'snake-canvas';
   const ctx = canvas.getContext('2d');
   container.appendChild(canvas);
+  const dpr = window.devicePixelRatio || 1;
+
+  const hud = document.createElement('div');
+  hud.className = 'snake-hud';
+  container.appendChild(hud);
 
   const input = new InputManager(container);
   let gameState = state;
   let localSnakes = structuredClone(state.snakes || {});
-  let deathAnimations = {}; // pid -> { frame, startTime }
+  let deathAnimations = {};
   let spectating = false;
+  let gyroEnabled = false;
+  let gyroCalibration = null;
+  const cleanups = [];
 
+  // --- Responsive canvas sizing ---
   function resize() {
-    const size = Math.min(container.clientWidth, container.clientHeight, 500);
-    canvas.width = size;
-    canvas.height = size;
+    const maxW = container.clientWidth;
+    const maxH = window.innerHeight * 0.65;
+    const size = Math.min(maxW, maxH);
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   resize();
   const resizeObserver = new ResizeObserver(resize);
   resizeObserver.observe(container);
+  window.addEventListener('resize', resize);
+  cleanups.push(() => window.removeEventListener('resize', resize));
 
-  // Input bindings
+  // --- Keyboard (PC) + AZERTY ---
   const dirMap = { up: 'UP', down: 'DOWN', left: 'LEFT', right: 'RIGHT' };
   for (const dir of ['up', 'down', 'left', 'right']) {
     input.on(dir, () => {
@@ -30,65 +50,193 @@ export function create({ container, controlsContainer, state, playerId, onAction
       input.vibrate(10);
     });
   }
-  input.bindKeyboard({ ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right' });
+  input.bindKeyboard({
+    ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
+    w: 'up', s: 'down', a: 'left', d: 'right',
+    z: 'up', q: 'left',
+  });
   input.bindSwipe();
 
-  // D-pad controls for mobile
+  // --- D-Pad (mobile, hidden on desktop via CSS) ---
   const dpad = document.createElement('div');
-  dpad.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:4px;max-width:200px;margin:8px auto';
-  const dirs = [
-    [null, '↑', null],
-    ['←', null, '→'],
-    [null, '↓', null],
+  dpad.className = 'snake-dpad';
+  const layout = [
+    [null, 'UP', null],
+    ['LEFT', null, 'RIGHT'],
+    [null, 'DOWN', null],
   ];
-  const dirActions = { '↑': 'UP', '↓': 'DOWN', '←': 'LEFT', '→': 'RIGHT' };
-  for (const row of dirs) {
+  for (const row of layout) {
     for (const d of row) {
       if (!d) {
-        dpad.appendChild(document.createElement('div'));
+        const spacer = document.createElement('div');
+        spacer.className = 'snake-dpad-spacer';
+        dpad.appendChild(spacer);
         continue;
       }
       const btn = document.createElement('button');
-      btn.className = 'btn btn-secondary';
-      btn.textContent = d;
-      btn.style.cssText = 'min-height:52px;font-size:1.5rem';
-      btn.addEventListener('pointerdown', () => { onAction({ direction: dirActions[d] }); input.vibrate(10); });
+      btn.className = 'snake-dpad-btn';
+      btn.textContent = DIR_ARROWS[d];
+      btn.setAttribute('aria-label', d);
+      btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        onAction({ direction: d });
+        input.vibrate(10);
+      });
       dpad.appendChild(btn);
     }
   }
   controlsContainer.appendChild(dpad);
 
-  function render() {
-    const cellSize = canvas.width / (gameState.size || 20);
-    ctx.fillStyle = '#111827';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // --- Fullscreen button (mobile) ---
+  const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  if (isMobile && document.fullscreenEnabled) {
+    const fsBtn = document.createElement('button');
+    fsBtn.className = 'snake-hud-btn';
+    fsBtn.textContent = '⛶';
+    fsBtn.title = 'Plein écran';
+    fsBtn.addEventListener('click', () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        container.requestFullscreen().catch(() => {});
+      }
+    });
+    hud.appendChild(fsBtn);
 
-    // Grid lines
+    const onFsChange = () => {
+      fsBtn.textContent = document.fullscreenElement ? '✕' : '⛶';
+      setTimeout(resize, 100);
+    };
+    document.addEventListener('fullscreenchange', onFsChange);
+    cleanups.push(() => document.removeEventListener('fullscreenchange', onFsChange));
+  }
+
+  // --- Gyroscope / tilt controls (mobile) ---
+  const gyroIndicator = document.createElement('div');
+  gyroIndicator.className = 'snake-gyro-indicator';
+  gyroIndicator.textContent = '📱 Gyroscope actif';
+  container.appendChild(gyroIndicator);
+
+  if (isMobile && window.DeviceOrientationEvent) {
+    const gyroBtn = document.createElement('button');
+    gyroBtn.className = 'snake-hud-btn';
+    gyroBtn.textContent = '📱';
+    gyroBtn.title = 'Contrôle gyroscope';
+    gyroBtn.addEventListener('click', () => {
+      if (gyroEnabled) disableGyro(); else enableGyro();
+    });
+    hud.appendChild(gyroBtn);
+
+    let lastGyroDir = null;
+    const gyroThreshold = 15;
+
+    function handleOrientation(e) {
+      if (!gyroEnabled) return;
+      const { beta, gamma } = e;
+      if (beta == null || gamma == null) return;
+      if (!gyroCalibration) { gyroCalibration = { beta, gamma }; return; }
+
+      const dBeta = beta - gyroCalibration.beta;
+      const dGamma = gamma - gyroCalibration.gamma;
+
+      let dir = null;
+      if (Math.abs(dGamma) > Math.abs(dBeta) && Math.abs(dGamma) > gyroThreshold) {
+        dir = dGamma > 0 ? 'RIGHT' : 'LEFT';
+      } else if (Math.abs(dBeta) > gyroThreshold) {
+        dir = dBeta > 0 ? 'DOWN' : 'UP';
+      }
+
+      if (dir && dir !== lastGyroDir) {
+        lastGyroDir = dir;
+        onAction({ direction: dir });
+        input.vibrate(10);
+      }
+    }
+
+    function enableGyro() {
+      gyroCalibration = null;
+      lastGyroDir = null;
+      const start = () => {
+        gyroEnabled = true;
+        gyroBtn.style.background = 'var(--color-primary)';
+        gyroIndicator.classList.add('visible');
+        setTimeout(() => gyroIndicator.classList.remove('visible'), 2000);
+        window.addEventListener('deviceorientation', handleOrientation);
+      };
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission().then(p => { if (p === 'granted') start(); }).catch(() => {});
+      } else {
+        start();
+      }
+    }
+
+    function disableGyro() {
+      gyroEnabled = false;
+      gyroCalibration = null;
+      gyroBtn.style.background = '';
+      window.removeEventListener('deviceorientation', handleOrientation);
+    }
+
+    cleanups.push(() => window.removeEventListener('deviceorientation', handleOrientation));
+  }
+
+  // Keep screen on during play
+  let wakeLock = null;
+  if ('wakeLock' in navigator) {
+    navigator.wakeLock.request('screen').then(wl => { wakeLock = wl; }).catch(() => {});
+  }
+
+  // --- Rendering ---
+  function render() {
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
+    const gridSize = gameState.size || 20;
+    const cellSize = Math.min(w, h) / gridSize;
+    const offsetX = (w - cellSize * gridSize) / 2;
+    const offsetY = (h - cellSize * gridSize) / 2;
+
+    ctx.fillStyle = '#111827';
+    ctx.fillRect(0, 0, w, h);
+    ctx.save();
+    ctx.translate(offsetX, offsetY);
+
+    // Grid
     ctx.strokeStyle = '#1f2937';
     ctx.lineWidth = 0.5;
-    for (let i = 0; i <= gameState.size; i++) {
+    for (let i = 0; i <= gridSize; i++) {
       ctx.beginPath();
       ctx.moveTo(i * cellSize, 0);
-      ctx.lineTo(i * cellSize, canvas.height);
+      ctx.lineTo(i * cellSize, gridSize * cellSize);
       ctx.stroke();
       ctx.beginPath();
       ctx.moveTo(0, i * cellSize);
-      ctx.lineTo(canvas.width, i * cellSize);
+      ctx.lineTo(gridSize * cellSize, i * cellSize);
       ctx.stroke();
     }
 
     // Obstacles
     ctx.fillStyle = '#4b5563';
     for (const [x, y] of (gameState.obstacles || [])) {
-      ctx.fillRect(x * cellSize + 1, y * cellSize + 1, cellSize - 2, cellSize - 2);
+      ctx.beginPath();
+      ctx.roundRect(x * cellSize + 1, y * cellSize + 1, cellSize - 2, cellSize - 2, 3);
+      ctx.fill();
     }
 
-    // Food
+    // Food with pulsing glow
     if (gameState.food) {
-      ctx.fillStyle = '#ef4444';
       const [fx, fy] = gameState.food;
+      const pulse = 0.8 + 0.2 * Math.sin(Date.now() / 200);
+      const fcx = fx * cellSize + cellSize / 2;
+      const fcy = fy * cellSize + cellSize / 2;
+      const r = cellSize / 2.5 * pulse;
+      const glow = ctx.createRadialGradient(fcx, fcy, r * 0.5, fcx, fcy, r * 2.5);
+      glow.addColorStop(0, 'rgba(239, 68, 68, 0.4)');
+      glow.addColorStop(1, 'transparent');
+      ctx.fillStyle = glow;
+      ctx.fillRect(fcx - r * 3, fcy - r * 3, r * 6, r * 6);
+      ctx.fillStyle = '#ef4444';
       ctx.beginPath();
-      ctx.arc(fx * cellSize + cellSize / 2, fy * cellSize + cellSize / 2, cellSize / 2.5, 0, Math.PI * 2);
+      ctx.arc(fcx, fcy, r, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -96,7 +244,6 @@ export function create({ container, controlsContainer, state, playerId, onAction
     for (const [pid, snake] of Object.entries(localSnakes)) {
       if (!snake.body || snake.body.length === 0) continue;
 
-      // Death animation
       const deathAnim = deathAnimations[pid];
       if (deathAnim) {
         const elapsed = Date.now() - deathAnim.startTime;
@@ -110,38 +257,69 @@ export function create({ container, controlsContainer, state, playerId, onAction
         ctx.globalAlpha = 1;
         if (elapsed > 800) {
           delete deathAnimations[pid];
-          // If this is us, switch to spectator mode
           if (pid === playerId) {
             spectating = true;
-            const specLabel = document.createElement('div');
-            specLabel.style.cssText = 'text-align:center;color:var(--text-muted);font-size:0.85rem;margin-top:4px';
-            specLabel.textContent = '👁 Mode spectateur';
-            controlsContainer.appendChild(specLabel);
+            const label = document.createElement('div');
+            label.className = 'snake-spectator';
+            label.textContent = '👁 Mode spectateur';
+            container.appendChild(label);
           }
         }
         continue;
       }
 
-      ctx.fillStyle = snake.alive ? (snake.color || '#4ade80') : '#6b7280';
+      const color = snake.color || '#4ade80';
+      const isMe = pid === playerId;
 
-      for (let i = 0; i < snake.body.length; i++) {
+      if (isMe && snake.alive) { ctx.shadowColor = color; ctx.shadowBlur = 8; }
+
+      for (let i = snake.body.length - 1; i >= 0; i--) {
         const [x, y] = snake.body[i];
-        const r = i === 0 ? 3 : 1;
+        const t = 1 - i / Math.max(snake.body.length, 1);
+        ctx.fillStyle = snake.alive ? color : '#6b7280';
+        ctx.globalAlpha = snake.alive ? (0.5 + 0.5 * t) : 0.4;
+        const rad = i === 0 ? 4 : 2;
+        const pad = i === 0 ? 0 : 1;
         ctx.beginPath();
-        ctx.roundRect(x * cellSize + 1, y * cellSize + 1, cellSize - 2, cellSize - 2, r);
+        ctx.roundRect(x * cellSize + pad, y * cellSize + pad, cellSize - pad * 2, cellSize - pad * 2, rad);
         ctx.fill();
       }
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
 
-      // Eyes on head
+      // Eyes positioned by direction
       if (snake.alive && snake.body.length > 0) {
         const [hx, hy] = snake.body[0];
+        const hcx = hx * cellSize + cellSize / 2;
+        const hcy = hy * cellSize + cellSize / 2;
+        const eyeR = Math.max(1.5, cellSize / 8);
+        const eyeOff = cellSize * 0.2;
+        const dir = snake.direction || 'RIGHT';
+        let e1x, e1y, e2x, e2y;
+        if (dir === 'RIGHT')      { e1x = hcx + eyeOff; e1y = hcy - eyeOff; e2x = hcx + eyeOff; e2y = hcy + eyeOff; }
+        else if (dir === 'LEFT')  { e1x = hcx - eyeOff; e1y = hcy - eyeOff; e2x = hcx - eyeOff; e2y = hcy + eyeOff; }
+        else if (dir === 'UP')    { e1x = hcx - eyeOff; e1y = hcy - eyeOff; e2x = hcx + eyeOff; e2y = hcy - eyeOff; }
+        else                      { e1x = hcx - eyeOff; e1y = hcy + eyeOff; e2x = hcx + eyeOff; e2y = hcy + eyeOff; }
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(e1x, e1y, eyeR, 0, Math.PI * 2); ctx.arc(e2x, e2y, eyeR, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#111';
-        ctx.beginPath();
-        ctx.arc(hx * cellSize + cellSize * 0.35, hy * cellSize + cellSize * 0.35, 2, 0, Math.PI * 2);
-        ctx.arc(hx * cellSize + cellSize * 0.65, hy * cellSize + cellSize * 0.35, 2, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(e1x, e1y, eyeR * 0.5, 0, Math.PI * 2); ctx.arc(e2x, e2y, eyeR * 0.5, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // Name tag above head
+      if (snake.alive && snake.body.length > 0) {
+        const [hx, hy] = snake.body[0];
+        const name = isMe ? 'Toi' : (pid.slice(0, 6));
+        ctx.font = `bold ${Math.max(9, cellSize * 0.6)}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillText(name, hx * cellSize + cellSize / 2, hy * cellSize - 4);
+        ctx.fillStyle = isMe ? '#fff' : '#ccc';
+        ctx.fillText(name, hx * cellSize + cellSize / 2, hy * cellSize - 5);
       }
     }
+
+    ctx.restore();
   }
 
   const loop = new GameLoop(() => {}, render);
@@ -151,9 +329,7 @@ export function create({ container, controlsContainer, state, playerId, onAction
     onAction(msg) {
       if (msg.result?.positions) {
         for (const [pid, data] of Object.entries(msg.result.positions)) {
-          if (localSnakes[pid]) {
-            localSnakes[pid].alive = data.alive;
-          }
+          if (localSnakes[pid]) localSnakes[pid].alive = data.alive;
         }
       }
     },
@@ -161,7 +337,6 @@ export function create({ container, controlsContainer, state, playerId, onAction
       if (data?.positions) {
         for (const [pid, info] of Object.entries(data.positions)) {
           if (localSnakes[pid]) {
-            // Detect death
             if (localSnakes[pid].alive && !info.alive) {
               deathAnimations[pid] = { startTime: Date.now() };
               if (pid === playerId) {
@@ -177,6 +352,7 @@ export function create({ container, controlsContainer, state, playerId, onAction
                 actionFeedback.collected('🍎', canvas);
               }
             }
+            if (info.direction) localSnakes[pid].direction = info.direction;
           }
         }
       }
@@ -190,6 +366,9 @@ export function create({ container, controlsContainer, state, playerId, onAction
       loop.stop();
       input.destroy();
       resizeObserver.disconnect();
+      container.classList.remove('snake-container');
+      wakeLock?.release().catch(() => {});
+      for (const fn of cleanups) fn();
     },
   };
 }

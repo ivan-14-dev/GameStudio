@@ -1,6 +1,8 @@
 @import url('./variables.css');
 @import url('./responsive.css');
 @import url('./animations.css');
+@import url('./games/snake.css');
+@import url('./games/snake-arena.css');
 
 *, *::before, *::after {
   box-sizing: border-box;
