@@ -102,7 +102,8 @@ export function CreateGameScreen(container, state) {
         if (!name) { showToast('Entre ton nom !', 'error'); return; }
         soundManager.play('click');
 
-        const wsUrl = `ws://${location.hostname}:${location.port || 3000}/ws`;
+        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsUrl = `${proto}://${location.hostname}:${location.port || 3000}/ws`;
         wsClient.connect(wsUrl, name);
 
         const unsub = eventBus.on('ws:connected', () => {
@@ -157,7 +158,8 @@ export function JoinGameScreen(container, state) {
         if (!code || code.length < 4) { showToast('Code invalide', 'error'); return; }
 
         soundManager.play('click');
-        const wsUrl = `ws://${location.hostname}:${location.port || 3000}/ws`;
+        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsUrl = `${proto}://${location.hostname}:${location.port || 3000}/ws`;
         wsClient.connect(wsUrl, name);
 
         const unsub = eventBus.on('ws:connected', () => {
